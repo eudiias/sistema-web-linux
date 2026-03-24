@@ -1,3 +1,10 @@
+<?php
+session_start();
+if (!isset($_SESSION['usuario'])) {
+    header("Location: ../index.php");
+    exit;
+}
+?>
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -16,7 +23,7 @@
  
     <div class="page">
         <p class="eyebrow">Painel Principal</p>
-        <h1 class="page-title">Bem-vindo ao<em> sistema.</em></h1>
+        <h1 class="page-title">Bem-vindo ao<em> Sistema Web Linux (SWL).</em></h1>
         <p class="page-subtitle">Selecione uma operação para executar</p>
  
         <div class="divider"></div>

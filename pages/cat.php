@@ -1,8 +1,8 @@
 <?php
 session_start();
-if(!isset($_SESSION['Logado'])){
-    header("Location: index.php");
-    exit();
+if (!isset($_SESSION['usuario'])) {
+    header("Location: ../index.php");
+    exit;
 }
 $SAIDA = shell_exec('cat /etc/hosts');
 ?>

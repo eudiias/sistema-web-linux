@@ -1,14 +1,51 @@
 <?php
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 session_start();
-$LG = $_POST['lg'];
-$SE = $_POST['se'];
-if($LG == "joca" && $SE == "1234")
-{
-	$_SESSION['Logado'] = true;
-	header("Location: pages/menu.php");
-	exit();
-}
-$erro = (!empty($_POST) && !$_SESSION['Logado']) ? true : false;
+
+$erro = false;
+
+if($_SERVER['REQUEST_METHOD'] === 'POST')
+    {
+        $servername = "localhost";
+        $username = "dias";
+        $password = "Cdin@2202";
+        $dbname = "sistema_web_linux";
+
+
+        $nome = $_POST['nome'];
+        $senha = $_POST['senha'];
+            
+
+        $conn = new mysqli($servername, $username,$password, $dbname);
+
+		$busca = $conn->prepare("SELECT senha FROM CadUser WHERE nome = ?");
+		$busca->bind_param("s", $nome);
+		$busca->execute();
+		$busca->store_result();
+
+		if ($busca->num_rows === 1)
+			{
+				$busca->bind_result($senhaHash);
+				$busca->fetch();
+
+				if (password_verify($senha, $senhaHash))
+					{
+						$_SESSION['usuario'] = $nome;
+						header("Location: pages/menu.php");
+						exit;
+					} else
+					{
+						$erro = true;
+					}
+			} else
+			{
+				$erro = true;
+			}
+		$busca->close();
+		$conn->close();
+
+	}
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -43,16 +80,16 @@ $erro = (!empty($_POST) && !$_SESSION['Logado']) ? true : false;
 		<form method="post" autocomplete="off">
 			<div class="field">
 				<label for="lg">Usuário</label>
-				<input type="text" name="lg" id="lg" placeholder="Digite seu login" autofocus>
+				<input type="text" name="nome" id="lg" placeholder="Digite seu login" autofocus>
 			</div>
 			<div class="field">
 				<label for="se">Senha</label>
-				<input type="password" name="se" id="se" placeholder="••••••••">
+				<input type="password" name="senha" id="se" placeholder="••••••••">
 			</div>
 			<button type="submit" class="btn-submit"><span>Entrar no sistema</span></button>
 		</form>
  
-		<p class="card-footer">Acesso monitorado e registrado</p>
+		<a href="pages/cadastro.php"><p class="card-footer">Não tenho registro.</p></a>
 	</div>
 </body>
 </html>
