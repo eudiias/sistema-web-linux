@@ -90,7 +90,7 @@ if (!isset($_SESSION['usuario'])) {
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a href="mudanomemaq.php" class="menu-link">
+                    <a href="mudanome.php" class="menu-link">
                         <div class="menu-left">
                             <span class="menu-cmd">hostname</span>
                             <span class="menu-name">Mudar nome da máquina</span>
