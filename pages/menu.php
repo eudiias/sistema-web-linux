@@ -5,6 +5,7 @@ if (!isset($_SESSION['usuario'])) {
     exit;
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -12,100 +13,434 @@ if (!isset($_SESSION['usuario'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SISTEMA — Menu</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../css/menustyle.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --ink: #0f0f0f;
+            --paper: #f5f0e8;
+            --accent: #c84b2f;
+            --muted: #8a8070;
+            --border: #d8d0c0;
+            --field-bg: #fffdf8;
+        }
+
+        html, body { height: 100%; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background-color: var(--paper);
+            color: var(--ink);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 60px,
+                rgba(0,0,0,0.025) 60px,
+                rgba(0,0,0,0.025) 61px
+            );
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* CORNER DECORATIONS */
+        .corner-deco {
+            position: fixed;
+            font-family: 'DM Serif Display', serif;
+            font-size: 11px;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--muted);
+            opacity: 0.5;
+            z-index: 10;
+        }
+        .corner-deco.tl { top: 32px; left: 40px; }
+        .corner-deco.tr { top: 32px; right: 40px; }
+        .corner-deco.bl { bottom: 32px; left: 40px; }
+        .corner-deco.br { bottom: 32px; right: 40px; }
+
+        /* BOTÃO HAMBÚRGUER */
+        .hamburger-btn {
+            position: fixed;
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 400;
+            background: var(--ink);
+            border: none;
+            cursor: pointer;
+            padding: 11px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            transition: background 0.2s;
+        }
+        .hamburger-btn:hover { background: var(--accent); }
+        .hamburger-btn span {
+            display: block;
+            width: 22px;
+            height: 2px;
+            background: var(--paper);
+            transition: transform 0.3s cubic-bezier(0.22,1,0.36,1), opacity 0.3s;
+        }
+        .hamburger-btn.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+        .hamburger-btn.open span:nth-child(2) { opacity: 0; }
+        .hamburger-btn.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+        /* OVERLAY DO MENU */
+        .menu-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--ink);
+            z-index: 300;
+            transform: translateX(-100%);
+            transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .menu-overlay.open { transform: translateX(0); }
+
+        .overlay-header {
+            padding: 28px 40px 22px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+        .overlay-logo {
+            font-family: 'DM Serif Display', serif;
+            font-size: 13px;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.4);
+        }
+        .overlay-title {
+            font-size: 10px;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        .overlay-nav {
+            flex: 1;
+            overflow-y: auto;
+            list-style: none;
+            padding: 8px 0;
+        }
+        .overlay-item { border-bottom: 1px solid rgba(255,255,255,0.06); }
+
+        .overlay-link {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 40px;
+            text-decoration: none;
+            color: rgba(255,255,255,0.8);
+            transition: background 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        .overlay-link::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 3px;
+            background: var(--accent);
+            transform: scaleY(0);
+            transition: transform 0.2s cubic-bezier(0.22,1,0.36,1);
+        }
+        .overlay-link:hover { background: rgba(255,255,255,0.05); color: #fff; }
+        .overlay-link:hover::before { transform: scaleY(1); }
+        .overlay-link:hover .overlay-arrow { transform: translateX(4px); color: var(--accent); }
+
+        .overlay-left { display: flex; align-items: center; gap: 18px; }
+        .overlay-cmd {
+            font-family: monospace;
+            font-size: 11px;
+            color: var(--accent);
+            background: rgba(200,75,47,0.15);
+            border: 1px solid rgba(200,75,47,0.3);
+            padding: 3px 9px;
+            letter-spacing: 0.05em;
+            min-width: 96px;
+            text-align: center;
+        }
+        .overlay-name { font-size: 14px; font-weight: 400; color: rgba(255,255,255,0.75); }
+        .overlay-arrow { font-size: 15px; color: rgba(255,255,255,0.2); transition: transform 0.2s, color 0.2s; }
+
+        .overlay-footer {
+            padding: 20px 40px;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            display: flex;
+            justify-content: flex-end;
+            flex-shrink: 0;
+        }
+        .btn-logout {
+            display: inline-flex;
+            align-items: center;
+            padding: 11px 28px;
+            background: transparent;
+            color: rgba(255,255,255,0.6);
+            border: 1px solid rgba(255,255,255,0.15);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            text-decoration: none;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
+        }
+        .btn-logout:hover { background: var(--accent); color: var(--paper); border-color: var(--accent); }
+
+        /* TELA DE BOAS-VINDAS */
+        .page {
+            position: relative;
+            z-index: 1;
+            max-width: 640px;
+            margin: 0 auto;
+            padding: 100px 24px 80px;
+            animation: rise 0.6s cubic-bezier(0.22,1,0.36,1) both;
+        }
+        @keyframes rise {
+            from { opacity: 0; transform: translateY(24px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .eyebrow {
+            font-size: 10px;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            color: var(--accent);
+            font-weight: 500;
+            margin-bottom: 12px;
+        }
+        .page-title {
+            font-family: 'DM Serif Display', serif;
+            font-size: 36px;
+            line-height: 1.1;
+            color: var(--ink);
+            margin-bottom: 8px;
+        }
+        .page-title em { font-style: italic; color: var(--accent); }
+        .page-subtitle { font-size: 13px; color: var(--muted); font-weight: 300; }
+
+        .divider { width: 40px; height: 2px; background: var(--accent); margin: 24px 0 36px; }
+
+        /* CARDS DE INFO */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 36px;
+        }
+        .info-card {
+            background: var(--field-bg);
+            border: 1px solid var(--border);
+            padding: 20px 22px;
+            box-shadow: 0 2px 0 rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.9);
+        }
+        .info-card-label {
+            font-size: 10px;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 8px;
+        }
+        .info-card-value {
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--ink);
+            display: flex;
+            align-items: center;
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #3a9e5c;
+            border-radius: 50%;
+            margin-right: 8px;
+            flex-shrink: 0;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50%       { opacity: 0.35; }
+        }
+
+        /* DICA DE NAVEGAÇÃO */
+        .hint-box {
+            background: var(--field-bg);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent);
+            padding: 18px 22px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .hint-icon { font-size: 18px; color: var(--accent); flex-shrink: 0; }
+        .hint-text { font-size: 13px; color: var(--muted); line-height: 1.55; }
+        .hint-text strong { color: var(--ink); font-weight: 500; }
+    </style>
 </head>
 <body>
- 
+
     <span class="corner-deco tl">Sistema</span>
     <span class="corner-deco tr">v1.0</span>
     <span class="corner-deco bl">&copy; <?= date('Y') ?></span>
     <span class="corner-deco br">Acesso Restrito</span>
- 
+
+    <!-- BOTÃO HAMBÚRGUER -->
+    <button class="hamburger-btn" id="hambtn" aria-label="Abrir menu">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+
+    <!-- OVERLAY DO MENU -->
+    <nav class="menu-overlay" id="overlay" aria-hidden="true">
+        <div class="overlay-header">
+            <span class="overlay-logo">SWL</span>
+            <span class="overlay-title">Módulos disponíveis</span>
+        </div>
+
+        <ul class="overlay-nav">
+            <li class="overlay-item">
+                <a href="lscpu.php" class="overlay-link">
+                    <div class="overlay-left">
+                        <span class="overlay-cmd">lscpu</span>
+                        <span class="overlay-name">Informações da CPU</span>
+                    </div>
+                    <span class="overlay-arrow">→</span>
+                </a>
+            </li>
+            <li class="overlay-item">
+                <a href="systemctl.php" class="overlay-link">
+                    <div class="overlay-left">
+                        <span class="overlay-cmd">systemctl</span>
+                        <span class="overlay-name">Serviços do sistema</span>
+                    </div>
+                    <span class="overlay-arrow">→</span>
+                </a>
+            </li>
+            <li class="overlay-item">
+                <a href="cat.php" class="overlay-link">
+                    <div class="overlay-left">
+                        <span class="overlay-cmd">cat</span>
+                        <span class="overlay-name">Leitura de arquivo</span>
+                    </div>
+                    <span class="overlay-arrow">→</span>
+                </a>
+            </li>
+            <li class="overlay-item">
+                <a href="lsusb.php" class="overlay-link">
+                    <div class="overlay-left">
+                        <span class="overlay-cmd">lsusb</span>
+                        <span class="overlay-name">Dispositivos USB</span>
+                    </div>
+                    <span class="overlay-arrow">→</span>
+                </a>
+            </li>
+            <li class="overlay-item">
+                <a href="networkctl.php" class="overlay-link">
+                    <div class="overlay-left">
+                        <span class="overlay-cmd">networkctl</span>
+                        <span class="overlay-name">Status de rede</span>
+                    </div>
+                    <span class="overlay-arrow">→</span>
+                </a>
+            </li>
+            <li class="overlay-item">
+                <a href="ipa.php" class="overlay-link">
+                    <div class="overlay-left">
+                        <span class="overlay-cmd">ip a</span>
+                        <span class="overlay-name">Endereços IP</span>
+                    </div>
+                    <span class="overlay-arrow">→</span>
+                </a>
+            </li>
+            <li class="overlay-item">
+                <a href="mudanome.php" class="overlay-link">
+                    <div class="overlay-left">
+                        <span class="overlay-cmd">hostname</span>
+                        <span class="overlay-name">Mudar nome da máquina</span>
+                    </div>
+                    <span class="overlay-arrow">→</span>
+                </a>
+            </li>
+        </ul>
+
+        <div class="overlay-footer">
+            <a href="logout.php" class="btn-logout">Sair do sistema</a>
+        </div>
+    </nav>
+
+    <!-- TELA DE BOAS-VINDAS -->
     <div class="page">
         <p class="eyebrow">Painel Principal</p>
         <h1 class="page-title">Bem-vindo ao<em> Sistema Web Linux (SWL).</em></h1>
-        <p class="page-subtitle">Selecione uma operação para executar</p>
- 
+        <p class="page-subtitle">Sessão iniciada com sucesso. Selecione um módulo pelo menu acima.</p>
+
         <div class="divider"></div>
- 
-        <div class="card">
-            <div class="card-bar">
-                <span class="card-label">Módulos disponíveis</span>
-                <span class="card-count">7 opções</span>
+
+        <div class="info-grid">
+            <div class="info-card">
+                <div class="info-card-label">Status do sistema</div>
+                <div class="info-card-value"><span class="status-dot"></span>Online</div>
             </div>
- 
-            <ul class="menu-list">
-                <li class="menu-item">
-                    <a href="lscpu.php" class="menu-link">
-                        <div class="menu-left">
-                            <span class="menu-cmd">lscpu</span>
-                            <span class="menu-name">Informações da CPU</span>
-                        </div>
-                        <span class="menu-arrow">→</span>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="systemctl.php" class="menu-link">
-                        <div class="menu-left">
-                            <span class="menu-cmd">systemctl</span>
-                            <span class="menu-name">Serviços do sistema</span>
-                        </div>
-                        <span class="menu-arrow">→</span>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="cat.php" class="menu-link">
-                        <div class="menu-left">
-                            <span class="menu-cmd">cat</span>
-                            <span class="menu-name">Leitura de arquivo</span>
-                        </div>
-                        <span class="menu-arrow">→</span>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="lsusb.php" class="menu-link">
-                        <div class="menu-left">
-                            <span class="menu-cmd">lsusb</span>
-                            <span class="menu-name">Dispositivos USB</span>
-                        </div>
-                        <span class="menu-arrow">→</span>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="networkctl.php" class="menu-link">
-                        <div class="menu-left">
-                            <span class="menu-cmd">networkctl</span>
-                            <span class="menu-name">Status de rede</span>
-                        </div>
-                        <span class="menu-arrow">→</span>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="ipa.php" class="menu-link">
-                        <div class="menu-left">
-                            <span class="menu-cmd">ip a</span>
-                            <span class="menu-name">Endereços IP</span>
-                        </div>
-                        <span class="menu-arrow">→</span>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="mudanome.php" class="menu-link">
-                        <div class="menu-left">
-                            <span class="menu-cmd">hostname</span>
-                            <span class="menu-name">Mudar nome da máquina</span>
-                        </div>
-                        <span class="menu-arrow">→</span>
-                    </a>
-                </li>
-            </ul>
- 
-            <div class="logout-area">
-                <a href="logout.php" class="btn-logout"><span>Sair do sistema</span></a>
+            <div class="info-card">
+                <div class="info-card-label">Módulos disponíveis</div>
+                <div class="info-card-value">7 opções</div>
+            </div>
+            <div class="info-card">
+                <div class="info-card-label">Versão</div>
+                <div class="info-card-value">SWL v1.0</div>
+            </div>
+            <div class="info-card">
+                <div class="info-card-label">Acesso</div>
+                <div class="info-card-value">Restrito</div>
             </div>
         </div>
+
+        <div class="hint-box">
+            <span class="hint-icon">&#9776;</span>
+            <p class="hint-text">
+                <strong>Como navegar:</strong> Clique no botão de menu no topo da página para acessar os módulos disponíveis do sistema.
+            </p>
+        </div>
     </div>
- 
+
+    <script>
+        const btn = document.getElementById('hambtn');
+        const overlay = document.getElementById('overlay');
+
+        btn.addEventListener('click', () => {
+            const isOpen = overlay.classList.toggle('open');
+            btn.classList.toggle('open', isOpen);
+            overlay.setAttribute('aria-hidden', String(!isOpen));
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && overlay.classList.contains('open')) {
+                overlay.classList.remove('open');
+                btn.classList.remove('open');
+                overlay.setAttribute('aria-hidden', 'true');
+                btn.focus();
+            }
+        });
+    </script>
+
 </body>
 </html>
- 
